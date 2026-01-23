@@ -31,7 +31,7 @@ async function run() {
     app.post("/books", async (req, res) => {
       const book = req.body;
       console.log(book);
-      
+
       const result = await booksCollection.insertOne(book);
       res.send(result);
     });
@@ -59,6 +59,14 @@ async function run() {
       } catch (error) {
         res.status(400).send({ message: "Invalid book id" });
       }
+    });
+    // Discord Class
+    app.get("/my-books", async (req, res) => {
+      const { email } = req.query;
+      const query = { userEmail: email };
+      const result = await booksCollection.find(query).toArray();
+      res.send(result);
+      console.log(email);
     });
 
     //  DELETE BOOK
