@@ -60,7 +60,7 @@ async function run() {
         res.status(400).send({ message: "Invalid book id" });
       }
     });
-    // Discord Class
+    
     app.get("/my-books", async (req, res) => {
       const { email } = req.query;
       const query = { userEmail: email };
