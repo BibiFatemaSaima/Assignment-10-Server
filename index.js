@@ -42,7 +42,7 @@ async function run() {
       res.send(result);
     });
 
-    // GET SINGLE BOOK (IMPORTANT)
+    // GET SINGLE BOOK
     app.get("/books/:id", async (req, res) => {
       const id = req.params.id;
 
@@ -60,7 +60,7 @@ async function run() {
         res.status(400).send({ message: "Invalid book id" });
       }
     });
-    
+
     app.get("/my-books", async (req, res) => {
       const { email } = req.query;
       const query = { userEmail: email };
@@ -78,6 +78,29 @@ async function run() {
       });
 
       res.send(result);
+    });
+    // UPDATE BOOK
+    app.put("/books/:id", async (req, res) => {
+      const id = req.params.id;
+      const updatedBook = req.body;
+
+      try {
+        const filter = { _id: new ObjectId(id) };
+
+        const updateDoc = {
+          $set: updatedBook,
+        };
+
+        const result = await booksCollection.updateOne(filter, updateDoc);
+
+        if (result.matchedCount === 0) {
+          return res.status(404).send({ message: "Book not found" });
+        }
+
+        res.send(result);
+      } catch (error) {
+        res.status(400).send({ message: "Invalid ID" });
+      }
     });
 
     console.log("MongoDB connected successfully");
