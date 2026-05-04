@@ -27,22 +27,20 @@ async function run() {
     const db = client.db("bookService");
     const booksCollection = db.collection("books");
 
-    // ADD BOOK
+    // ✅ ADD BOOK
     app.post("/books", async (req, res) => {
       const book = req.body;
-      console.log(book);
-
       const result = await booksCollection.insertOne(book);
       res.send(result);
     });
 
-    //  GET ALL BOOKS here
+    // ✅ GET ALL BOOKS
     app.get("/books", async (req, res) => {
       const result = await booksCollection.find().toArray();
       res.send(result);
     });
 
-    // GET SINGLE BOOK
+    // ✅ GET SINGLE BOOK
     app.get("/books/:id", async (req, res) => {
       const id = req.params.id;
 
@@ -61,15 +59,15 @@ async function run() {
       }
     });
 
+    // ✅ MY BOOKS
     app.get("/my-books", async (req, res) => {
       const { email } = req.query;
       const query = { userEmail: email };
       const result = await booksCollection.find(query).toArray();
       res.send(result);
-      console.log(email);
     });
 
-    //  DELETE BOOK
+    // ✅ DELETE BOOK
     app.delete("/books/:id", async (req, res) => {
       const id = req.params.id;
 
@@ -79,32 +77,33 @@ async function run() {
 
       res.send(result);
     });
-    // UPDATE BOOK
-    app.put("/books/:id", async (req, res) => {
+
+    // 🔥 ✅ UPDATE BOOK (MENTOR STYLE)
+    app.put("/update/:id", async (req, res) => {
+      const data = req.body;
+
       const id = req.params.id;
-      const updatedBook = req.body;
+      const query = { _id: new ObjectId(id) };
+
+      const updateService = {
+        $set: data,
+      };
 
       try {
-        const filter = { _id: new ObjectId(id) };
-
-        const updateDoc = {
-          $set: updatedBook,
-        };
-
-        const result = await booksCollection.updateOne(filter, updateDoc);
-
-        if (result.matchedCount === 0) {
-          return res.status(404).send({ message: "Book not found" });
-        }
+        const result = await booksCollection.updateOne(
+          query,
+          updateService
+        );
 
         res.send(result);
       } catch (error) {
-        res.status(400).send({ message: "Invalid ID" });
+        res.status(400).send({ message: "Update failed" });
       }
     });
 
     console.log("MongoDB connected successfully");
   } finally {
+    // keep empty
   }
 }
 
