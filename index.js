@@ -1,7 +1,8 @@
 const express = require("express");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
-
+const dotenv = require('dotenv');
+dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -10,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 const uri =
-  "mongodb+srv://bibifatemasaima_db_user:3zrNelqKAJGhvCkD@book-haven.xdmsye5.mongodb.net/?appName=Book-Haven";
+  `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@book-haven.xdmsye5.mongodb.net/?appName=Book-Haven`;
 
 const client = new MongoClient(uri, {
   serverApi: {
@@ -27,20 +28,24 @@ async function run() {
     const db = client.db("bookService");
     const booksCollection = db.collection("books");
 
-    // ✅ ADD BOOK
+    //  NEW: Orders Collection
+    const ordersCollection = db.collection("orders");
+
+
+    //  ADD BOOK
     app.post("/books", async (req, res) => {
       const book = req.body;
       const result = await booksCollection.insertOne(book);
       res.send(result);
     });
 
-    // ✅ GET ALL BOOKS
+    //  GET ALL BOOKS
     app.get("/books", async (req, res) => {
       const result = await booksCollection.find().toArray();
       res.send(result);
     });
 
-    // ✅ GET SINGLE BOOK
+    //  GET SINGLE BOOK
     app.get("/books/:id", async (req, res) => {
       const id = req.params.id;
 
@@ -59,7 +64,7 @@ async function run() {
       }
     });
 
-    // ✅ MY BOOKS
+    //  MY BOOKS
     app.get("/my-books", async (req, res) => {
       const { email } = req.query;
       const query = { userEmail: email };
@@ -67,7 +72,7 @@ async function run() {
       res.send(result);
     });
 
-    // ✅ DELETE BOOK
+    //  DELETE BOOK
     app.delete("/books/:id", async (req, res) => {
       const id = req.params.id;
 
@@ -78,11 +83,11 @@ async function run() {
       res.send(result);
     });
 
-    // 🔥 ✅ UPDATE BOOK (MENTOR STYLE)
+    //  UPDATE BOOK
     app.put("/update/:id", async (req, res) => {
       const data = req.body;
-
       const id = req.params.id;
+
       const query = { _id: new ObjectId(id) };
 
       const updateService = {
@@ -99,6 +104,58 @@ async function run() {
       } catch (error) {
         res.status(400).send({ message: "Update failed" });
       }
+    });
+
+
+    //  CREATE ORDER
+    app.post("/orders", async (req, res) => {
+      const order = req.body;
+console.log(order);
+
+      //  important fields
+      order.createdAt = new Date();
+      order.status = "pending";
+
+      try {
+        const result = await ordersCollection.insertOne(order);
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ message: "Failed to create order" });
+      }
+    });
+
+    //  GET ORDERS (optional filter by email)
+    app.get("/orders", async (req, res) => {
+      const { email } = req.query;
+
+      const query = email ? { email: email } : {};
+
+      const result = await ordersCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    //  DELETE ORDER (Cancel order)
+    app.delete("/orders/:id", async (req, res) => {
+      const id = req.params.id;
+
+      const result = await ordersCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+
+      res.send(result);
+    });
+
+    //  UPDATE ORDER STATUS
+    app.patch("/orders/:id", async (req, res) => {
+      const id = req.params.id;
+      const { status } = req.body;
+
+      const result = await ordersCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { status: status } }
+      );
+
+      res.send(result);
     });
 
     console.log("MongoDB connected successfully");
